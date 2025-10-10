@@ -439,6 +439,3 @@ private class ObserverContext {
     self.element = element
   }
 }
-
-// MARK: - Observer Callback
-
