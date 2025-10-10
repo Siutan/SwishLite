@@ -1,0 +1,46 @@
+swiftlint_version: 0.54.0
+included:
+  - SwishLite
+analyzer_rules:
+  - unused_import
+opt_in_rules:
+  - closure_spacing
+  - empty_count
+  - fatal_error_message
+  - implicit_return
+  - redundant_nil_coalescing
+  - strict_fileprivate
+  - vertical_whitespace
+  - yoda_condition
+  - pattern_matching_keywords
+  - discouraged_object_literal
+  - explicit_init
+  - redundant_type_annotation
+  - file_header
+  - toggle_bool
+  - unowned_variable_capture
+  - unused_declaration
+disabled_rules:
+  - cyclomatic_complexity
+  - function_body_length
+  - type_body_length
+  - large_tuple
+  - file_length
+  - identifier_name
+  - line_length
+  - trailing_whitespace
+  - todo
+  - force_cast
+  - force_try
+  - nesting
+  - orphaned_doc_comment
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  excluded: [id, x, y]
+line_length:
+  warning: 120
+  ignores_comments: true
+  ignores_function_declarations: true
+  ignores_urls: true

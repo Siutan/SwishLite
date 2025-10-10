@@ -1,0 +1,22 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:SwishLite}",
+      "name": "Debug SwishLite",
+      "program": "${workspaceFolder:SwishLite}/.build/debug/SwishLite",
+      "preLaunchTask": "swift: Build Debug SwishLite"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:SwishLite}",
+      "name": "Release SwishLite",
+      "program": "${workspaceFolder:SwishLite}/.build/release/SwishLite",
+      "preLaunchTask": "swift: Build Release SwishLite"
+    }
+  ]
+}

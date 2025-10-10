@@ -1,0 +1,12 @@
+--swiftversion 5.9
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapcollections before-first
+--stripunusedargs closure-only
+--self remove
+--importgrouping testable-last
+--header ignore
+--disable redundantSelf,hoistImports
+
+
