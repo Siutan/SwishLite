@@ -15,22 +15,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Run as an accessory to minimize visual footprint (keeps focus on the current app).
     NSApp.setActivationPolicy(.accessory)
 
-    // Ask for Accessibility permission up-front to avoid partial feature states later.
-    let hasPermission = PermissionsManager.shared.ensureAccessibilityPermission(prompt: true)
+    // Delay permission check to allow macOS to update its accessibility cache
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+      let hasPermission = PermissionsManager.shared.ensureAccessibilityPermission(prompt: true)
 
-    if !hasPermission {
-      // Poll until permission is granted; we avoid background gestures without trust
-      // to prevent confusing no-op interactions.
-      PermissionsManager.shared.startPolling { [weak self] (trusted: Bool) in
-        if trusted {
-          Task { @MainActor in
-            self?.startMonitoring()
+      if !hasPermission {
+        // Poll until permission is granted; we avoid background gestures without trust
+        // to prevent confusing no-op interactions.
+        PermissionsManager.shared.startPolling { [weak self] (trusted: Bool) in
+          if trusted {
+            Task { @MainActor in
+              self?.startMonitoring()
+              self?.menuBarController.updateMenu()
+              NSLog("Accessibility permission granted, monitoring started")
+            }
           }
         }
-      }
-    } else {
-      Task { @MainActor in
-        startMonitoring()
+      } else {
+        Task { @MainActor in
+          self?.startMonitoring()
+        }
       }
     }
 

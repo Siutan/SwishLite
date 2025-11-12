@@ -21,9 +21,13 @@ final class PermissionsManager {
       // Use unretained value for static CFString constant; pass as CFDictionary
       let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
       let options = [key: true] as CFDictionary
-      return AXIsProcessTrustedWithOptions(options)
+      let trusted = AXIsProcessTrustedWithOptions(options)
+      NSLog("Accessibility permission check (with prompt): \(trusted)")
+      return trusted
     }
-    return AXIsProcessTrusted()
+    let trusted = AXIsProcessTrusted()
+    NSLog("Accessibility permission check (no prompt): \(trusted)")
+    return trusted
   }
 
   /// Check permission without prompting (useful for status checks)
