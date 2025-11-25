@@ -49,7 +49,7 @@ final class PreviewOverlay {
 
   func showCancelPreview() {
     // For cancel, show a small indicator at the center of the screen
-    guard let screen = NSScreen.main else { return }
+    guard let screen = WindowResolver.shared.screenUnderPointer() else { return }
     let vf = screen.visibleFrame
     let cancelRect = CGRect(
       x: vf.midX - 25,

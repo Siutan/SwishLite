@@ -18,7 +18,7 @@ final class EventMonitor {
   private var eventTapRunLoopSource: CFRunLoopSource?
   private var fnDown = false
   private var otherModifiersDown = false
-  private var isEnabled = true
+  var isEnabled = true
 
   var onSwipe: ((SwipeDirection) -> Void)?
 
@@ -151,15 +151,21 @@ final class EventMonitor {
     switch event.type {
     case .flagsChanged:
       let previousFnDown = fnDown
-      fnDown = event.modifierFlags.contains(.function)
+      let masterKey = SettingsManager.shared.modifierKey.eventModifierFlags
+      fnDown = event.modifierFlags.contains(masterKey)
 
-      // Check for other modifier keys (excluding Function key and deviceIndependentFlagsMask)
-      let otherModifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
+      // Check for other modifier keys (excluding the master key and deviceIndependentFlagsMask)
+      var relevantModifiers: NSEvent.ModifierFlags = [
+        .command, .option, .control, .shift, .function,
+      ]
+      relevantModifiers.remove(masterKey)
+
+      let otherModifiers = event.modifierFlags.intersection(relevantModifiers)
       otherModifiersDown = !otherModifiers.isEmpty
 
-      // Reset gesture state when Fn is released OR when other modifiers are pressed.
+      // Reset gesture state when Master Key is released OR when other modifiers are pressed.
       // Resetting here avoids executing actions while the modifier context changed.
-      // Only reset if Fn was previously down (to avoid spurious resets)
+      // Only reset if Master Key was previously down (to avoid spurious resets)
       if (previousFnDown && !fnDown) || (fnDown && otherModifiersDown) {
         GestureClassifier.shared.reset()
       }

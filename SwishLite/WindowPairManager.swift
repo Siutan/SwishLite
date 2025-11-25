@@ -366,8 +366,8 @@ final class WindowPairManager {
     }
 
     // Convert from CG coordinates to AppKit coordinates
-    guard let mainScreen = NSScreen.main else { return nil }
-    let screenHeight = mainScreen.frame.height
+    guard let primaryScreen = NSScreen.screens.first else { return nil }
+    let screenHeight = primaryScreen.frame.height
     let appKitY = screenHeight - (position.y + size.height)
 
     return CGRect(
@@ -380,8 +380,8 @@ final class WindowPairManager {
 
   private func applyFrame(_ frame: CGRect, to element: AXUIElement, screen: NSScreen) {
     // Convert to CG coordinates
-    guard let mainScreen = NSScreen.main else { return }
-    let screenHeight = mainScreen.frame.height
+    guard let primaryScreen = NSScreen.screens.first else { return }
+    let screenHeight = primaryScreen.frame.height
     let cgY = screenHeight - (frame.origin.y + frame.height)
 
     var position = CGPoint(x: frame.origin.x, y: cgY)
