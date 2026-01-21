@@ -259,8 +259,9 @@ final class EventMonitor {
       success = engine.minimize(window)
     }
 
-    // Bring window to front if action was successful
-    if success {
+    // Bring window to front if action was successful (except for minimize)
+    // Minimized windows should remain hidden, not be brought to the front
+    if success && direction != .down {
       bringWindowToFront(window)
     }
 

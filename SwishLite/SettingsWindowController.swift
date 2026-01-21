@@ -54,18 +54,21 @@ final class SettingsWindowController: NSWindowController {
       let buttonRect = button.window?.convertToScreen(button.frame) ?? .zero
       let windowSize = window.frame.size
       
-      let x = buttonRect.origin.x - (windowSize.width / 2) + (buttonRect.width / 2)
+      var x = buttonRect.origin.x - (windowSize.width / 2) + (buttonRect.width / 2)
       let y = buttonRect.origin.y - windowSize.height - 5
       
-      window.setFrameOrigin(NSPoint(x: x, y: y))
-      
-      // Ensure window is on screen
+      // Ensure window is on screen before setting frame
       if let screen = NSScreen.main {
         let screenFrame = screen.visibleFrame
-        if window.frame.maxX > screenFrame.maxX {
-          window.setFrameOrigin(NSPoint(x: screenFrame.maxX - windowSize.width - 10, y: y))
+        if x + windowSize.width > screenFrame.maxX {
+          x = screenFrame.maxX - windowSize.width - 10
         }
       }
+      
+      // Set frame atomically to avoid layout recursion (macOS 26 Tahoe)
+      // Using setFrame() instead of setFrameOrigin() prevents multiple layout passes
+      let newFrame = NSRect(origin: NSPoint(x: x, y: y), size: windowSize)
+      window.setFrame(newFrame, display: false)
       
       showWindow(nil)
       NSApp.activate(ignoringOtherApps: true)
