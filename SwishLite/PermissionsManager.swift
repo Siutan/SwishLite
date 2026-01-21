@@ -42,17 +42,11 @@ final class PermissionsManager {
     // Rationale: Polling keeps UX simple—when trust flips, we start monitoring immediately.
     // Schedule timer on main run loop to ensure it runs on the main thread
     DispatchQueue.main.async {
-      var timerRef: Timer?
-      timerRef = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
-        Task { @MainActor in
-          let trusted = PermissionsManager.shared.checkAccessibilityPermission()
-          callback(trusted)
-          if trusted {
-            // Invalidate timer on main thread
-            DispatchQueue.main.async {
-              timerRef?.invalidate()
-            }
-          }
+      Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { timer in
+        let trusted = AXIsProcessTrusted()
+        callback(trusted)
+        if trusted {
+          timer.invalidate()
         }
       }
     }
