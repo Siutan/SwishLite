@@ -5,6 +5,7 @@
 //  SwiftUI view for the settings window
 //
 
+import AppKit
 import Combine
 import SwiftUI
 
@@ -23,39 +24,39 @@ struct SettingsView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      // Header / Status
-      HStack {
-        Circle()
-          .fill(hasPermission ? Color.green : Color.yellow)
-          .frame(width: 8, height: 8)
-
-        Text(hasPermission ? "Active" : "Needs Permission")
-          .font(.system(size: 13, weight: .medium))
-          .foregroundColor(hasPermission ? .primary : .secondary)
-
-        Spacer()
-      }
+      SegmentedControl(
+        labels: ["General", "Behaviour"],
+        selection: Binding(
+          get: { selectedTab == .general ? 0 : 1 },
+          set: { selectedTab = ($0 == 0) ? .general : .behaviour }
+        )
+      )
+      .frame(maxWidth: .infinity)
       .padding(.horizontal, 16)
-      .padding(.vertical, 12)
-      .background(Color(NSColor.controlBackgroundColor))
+      .padding(.top, 12)
 
-      Divider()
-
-      Picker("", selection: $selectedTab) {
-        Text("General").tag(SettingsTab.general)
-        Text("Behaviour").tag(SettingsTab.behaviour)
-      }
-      .pickerStyle(SegmentedPickerStyle())
-      .padding(.horizontal, 16)
-      .padding(.vertical, 8)
-
-      Divider()
+      Spacer(minLength: 10)
 
       Group {
         switch selectedTab {
         case .general:
-          // General Tab
           VStack(alignment: .leading, spacing: 16) {
+            HStack {
+              VStack(alignment: .leading, spacing: 4) {
+                Text("SwishLite")
+                  .font(.system(size: 14, weight: .semibold))
+                Text(hasPermission ? "Active" : "Needs Permission")
+                  .font(.system(size: 11, weight: .medium))
+                  .foregroundColor(hasPermission ? .primary : .secondary)
+              }
+
+              Spacer()
+
+              Circle()
+                .fill(hasPermission ? Color.green : Color.yellow)
+                .frame(width: 8, height: 8)
+            }
+
             VStack(alignment: .leading, spacing: 12) {
               Text("Master Key")
                 .font(.system(size: 11, weight: .semibold))
@@ -75,8 +76,6 @@ struct SettingsView: View {
                 .foregroundColor(.secondary)
             }
 
-            Divider()
-
             Toggle(
               "Enable Gestures",
               isOn: Binding(
@@ -87,8 +86,6 @@ struct SettingsView: View {
             .toggleStyle(SwitchToggleStyle(tint: .accentColor))
 
             if !hasPermission {
-              Divider()
-
               Button(action: {
                 _ = PermissionsManager.shared.ensureAccessibilityPermission(prompt: true)
               }) {
@@ -100,13 +97,10 @@ struct SettingsView: View {
               }
               .buttonStyle(.borderedProminent)
             }
-
-            Spacer()
           }
-          .padding(30)
+          .frame(maxWidth: .infinity, alignment: .leading)
 
         case .behaviour:
-          // Behaviour Tab
           VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 12) {
               Text("Sensitivity")
@@ -139,8 +133,6 @@ struct SettingsView: View {
               .pickerStyle(SegmentedPickerStyle())
             }
 
-            Divider()
-
             Toggle("Block Events While Held", isOn: $settings.blockEventsWhileFnHeld)
               .toggleStyle(SwitchToggleStyle(tint: .accentColor))
               .help(
@@ -151,16 +143,48 @@ struct SettingsView: View {
               .toggleStyle(SwitchToggleStyle(tint: .accentColor))
               .help("Automatically pairs windows when snapping to left/right halves")
 
-            Spacer()
+            VStack(alignment: .leading, spacing: 12) {
+              Text("Preview")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.secondary)
+
+              HStack {
+                Text("Color")
+                  .font(.system(size: 12, weight: .medium))
+                  .frame(width: 60, alignment: .leading)
+
+                ColorPicker(
+                  "",
+                  selection: Binding(
+                    get: { Color(settings.previewColor) },
+                    set: { settings.previewColor = NSColor($0) }
+                  ),
+                  supportsOpacity: false
+                )
+                .labelsHidden()
+              }
+
+              HStack {
+                Text("Opacity")
+                  .font(.system(size: 12, weight: .medium))
+                  .frame(width: 60, alignment: .leading)
+
+                Slider(value: $settings.previewOpacity, in: 0.1...0.8, step: 0.05)
+                Text("\(Int(settings.previewOpacity * 100))%")
+                  .font(.system(size: 11, weight: .medium))
+                  .foregroundColor(.secondary)
+                  .frame(width: 44, alignment: .trailing)
+              }
+            }
           }
-          .padding(30)
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
       }
-      .frame(height: 300)  // Fixed height for content
+      .padding(.horizontal, 16)
+      .padding(.vertical, 12)
 
-      Divider()
+      Spacer(minLength: 10)
 
-      // Footer Actions
       HStack {
         Button("About") {
           showAbout()
@@ -174,10 +198,10 @@ struct SettingsView: View {
         }
         .buttonStyle(.bordered)
       }
-      .padding(12)
-      .background(Color(NSColor.controlBackgroundColor))
+      .padding(.horizontal, 12)
+      .padding(.bottom, 12)
     }
-    .frame(width: 360)  // Increased width to accommodate padding
+    .frame(width: 380)
     .fixedSize(horizontal: false, vertical: true)
     .onReceive(timer) { _ in
       hasPermission = PermissionsManager.shared.checkAccessibilityPermission()
@@ -200,5 +224,53 @@ struct SettingsView: View {
     alert.alertStyle = .informational
     alert.addButton(withTitle: "OK")
     alert.runModal()
+  }
+}
+
+private struct SegmentedControl: NSViewRepresentable {
+  let labels: [String]
+  @Binding var selection: Int
+
+  func makeNSView(context: Context) -> NSSegmentedControl {
+    let control = NSSegmentedControl(
+      labels: labels,
+      trackingMode: .selectOne,
+      target: context.coordinator,
+      action: #selector(Coordinator.changed(_:))
+    )
+    control.selectedSegment = selection
+    control.segmentStyle = .rounded
+    control.controlSize = .small
+    control.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+    return control
+  }
+
+  func updateNSView(_ nsView: NSSegmentedControl, context: Context) {
+    if nsView.segmentCount != labels.count {
+      nsView.segmentCount = labels.count
+      for (index, label) in labels.enumerated() {
+        nsView.setLabel(label, forSegment: index)
+      }
+    }
+
+    if nsView.selectedSegment != selection {
+      nsView.selectedSegment = selection
+    }
+  }
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator(selection: $selection)
+  }
+
+  final class Coordinator: NSObject {
+    var selection: Binding<Int>
+
+    init(selection: Binding<Int>) {
+      self.selection = selection
+    }
+
+    @objc func changed(_ sender: NSSegmentedControl) {
+      selection.wrappedValue = sender.selectedSegment
+    }
   }
 }

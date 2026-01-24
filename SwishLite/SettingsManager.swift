@@ -19,6 +19,10 @@ final class SettingsManager: ObservableObject {
   private let blockEventsKey = "blockEventsWhileFnHeld"
   private let enableWindowPairingKey = "enableWindowPairing"
   private let modifierKeyKey = "modifierKey"
+  private let previewColorRedKey = "previewColorRed"
+  private let previewColorGreenKey = "previewColorGreen"
+  private let previewColorBlueKey = "previewColorBlue"
+  private let previewOpacityKey = "previewOpacity"
 
   private init() {
     // Initialize published properties from defaults
@@ -32,6 +36,19 @@ final class SettingsManager: ObservableObject {
     } else {
       self.modifierKey = .fn
     }
+
+    let savedRed = defaults.object(forKey: previewColorRedKey) as? Double
+    let savedGreen = defaults.object(forKey: previewColorGreenKey) as? Double
+    let savedBlue = defaults.object(forKey: previewColorBlueKey) as? Double
+
+    if let red = savedRed, let green = savedGreen, let blue = savedBlue {
+      self.previewColor = NSColor(calibratedRed: red, green: green, blue: blue, alpha: 1.0)
+    } else {
+      self.previewColor = SettingsManager.defaultPreviewColor()
+    }
+
+    let savedOpacity = defaults.object(forKey: previewOpacityKey) as? Double
+    self.previewOpacity = savedOpacity ?? 0.3
   }
 
   enum ModifierKey: String, CaseIterable, Identifiable {
@@ -81,6 +98,38 @@ final class SettingsManager: ObservableObject {
         WindowPairManager.shared.clearAll()
       }
     }
+  }
+
+  // Preview overlay appearance
+  @Published var previewColor: NSColor {
+    didSet {
+      storePreviewColor(previewColor)
+      NotificationCenter.default.post(name: .settingsChanged, object: nil)
+    }
+  }
+
+  @Published var previewOpacity: Double {
+    didSet {
+      let clamped = min(max(previewOpacity, 0.05), 1.0)
+      if clamped != previewOpacity {
+        previewOpacity = clamped
+        return
+      }
+      defaults.set(previewOpacity, forKey: previewOpacityKey)
+      NotificationCenter.default.post(name: .settingsChanged, object: nil)
+    }
+  }
+
+  private static func defaultPreviewColor() -> NSColor {
+    let accent = NSColor.controlAccentColor
+    return accent.usingColorSpace(.sRGB) ?? accent
+  }
+
+  private func storePreviewColor(_ color: NSColor) {
+    let colorToStore = color.usingColorSpace(.sRGB) ?? color
+    defaults.set(colorToStore.redComponent, forKey: previewColorRedKey)
+    defaults.set(colorToStore.greenComponent, forKey: previewColorGreenKey)
+    defaults.set(colorToStore.blueComponent, forKey: previewColorBlueKey)
   }
 }
 

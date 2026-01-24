@@ -150,31 +150,36 @@ private class PreviewView: NSView {
 
     let context = NSGraphicsContext.current?.cgContext
     context?.saveGState()
+    let settings = SettingsManager.shared
+    let baseColor = settings.previewColor.usingColorSpace(.sRGB) ?? settings.previewColor
+    let fillColor = baseColor.withAlphaComponent(settings.previewOpacity).cgColor
+    let strokeAlpha = min(settings.previewOpacity + 0.25, 1.0)
+    let strokeColor = baseColor.withAlphaComponent(strokeAlpha).cgColor
 
     switch previewType {
     case .leftHalf, .rightHalf, .maximize:
       // Draw blue semi-transparent overlay for window positioning
-      context?.setFillColor(NSColor.controlAccentColor.withAlphaComponent(0.3).cgColor)
+      context?.setFillColor(fillColor)
       context?.fill(bounds)
 
       // Draw border
-      context?.setStrokeColor(NSColor.controlAccentColor.cgColor)
+      context?.setStrokeColor(strokeColor)
       context?.setLineWidth(3.0)
       context?.stroke(bounds)
 
     case .minimize:
-      // Draw yellow semi-transparent overlay for minimize
-      context?.setFillColor(NSColor.systemYellow.withAlphaComponent(0.4).cgColor)
+      // Draw preview for minimize
+      context?.setFillColor(fillColor)
       context?.fill(bounds)
 
       // Draw border
-      context?.setStrokeColor(NSColor.systemYellow.cgColor)
+      context?.setStrokeColor(strokeColor)
       context?.setLineWidth(2.0)
       context?.stroke(bounds)
 
       // Draw minimize icon
       let iconRect = NSRect(x: bounds.midX - 10, y: bounds.midY - 10, width: 20, height: 20)
-      context?.setFillColor(NSColor.black.cgColor)
+      context?.setFillColor(NSColor.labelColor.cgColor)
       context?.fill(iconRect)
 
     case .cancel:

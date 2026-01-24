@@ -41,6 +41,7 @@ final class SettingsWindowController: NSWindowController {
   }
   
   @objc private func windowDidResignKey() {
+    closeColorPanel()
     close()
   }
   
@@ -48,6 +49,7 @@ final class SettingsWindowController: NSWindowController {
     guard let window = window, let button = statusItem?.button else { return }
     
     if window.isVisible {
+      closeColorPanel()
       close()
     } else {
       // Position window relative to status item
@@ -74,5 +76,9 @@ final class SettingsWindowController: NSWindowController {
       NSApp.activate(ignoringOtherApps: true)
       window.makeKeyAndOrderFront(nil)
     }
+  }
+
+  private func closeColorPanel() {
+    NSColorPanel.shared.close()
   }
 }
