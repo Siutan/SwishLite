@@ -22,7 +22,6 @@ final class GestureClassifier {
     private enum Constants {
         static let defaultDetectionThreshold: CGFloat = 25.0
         static let defaultDirectionChangeAngle: CGFloat = 90.0
-        static let cancelThreshold: CGFloat = 25.0
         static let gestureTimeout: TimeInterval = 100 // Keep long to avoid mid-gesture resets
         static let minHapticInterval: TimeInterval = 0.15
     }
@@ -31,7 +30,7 @@ final class GestureClassifier {
     var detectionThreshold: CGFloat = Constants.defaultDetectionThreshold
     var directionChangeAngle: CGFloat = Constants.defaultDirectionChangeAngle
     
-    // Accumulated deltas from absolute start (for cancel detection)
+    // Accumulated deltas from absolute start
     private var absoluteX: CGFloat = 0
     private var absoluteY: CGFloat = 0
     
@@ -49,10 +48,6 @@ final class GestureClassifier {
     // Current gesture state
     private var currentDirection: SwipeDirection?
     private var isShowingPreview = false
-    private var isCancelling = false
-    
-    // Cancel gesture properties
-    private var cancelThreshold: CGFloat = Constants.cancelThreshold // Distance from absolute origin to trigger cancel
     private var lastDirectionChangeTime: TimeInterval = 0
     
     var onSwipeDetected: ((SwipeDirection) -> Void)? // Called when swipe is first detected
@@ -102,11 +97,6 @@ final class GestureClassifier {
         relativeX += deltaX
         relativeY += deltaY
         
-        // Check for cancel first to allow users to bail out by returning to origin.
-        if !isCancelling && checkForCancel() {
-            return
-        }
-        
         // Determine current movement direction
         let newDirection = determineDirection()
         
@@ -121,7 +111,6 @@ final class GestureClassifier {
                         resetCenterPoint()
                         currentDirection = newDir
                         lastDirectionChangeTime = currentTime
-                        isCancelling = false
                         
                         // Provide haptic feedback for direction change
                         HapticFeedback.shared.swipeDetected()
@@ -131,7 +120,6 @@ final class GestureClassifier {
                     } else {
                         // Small direction change - just update without resetting center
                         currentDirection = newDir
-                        isCancelling = false
                         
                         // Throttle feedback to prevent tactile noise during micro-adjustments
                         if currentTime - lastDirectionChangeTime >= Constants.minHapticInterval {
@@ -145,7 +133,6 @@ final class GestureClassifier {
                 // First direction detected
                 currentDirection = newDir
                 isShowingPreview = true
-                isCancelling = false
                 lastDirectionChangeTime = currentTime
                 
                 HapticFeedback.shared.swipeDetected()
@@ -206,43 +193,8 @@ final class GestureClassifier {
         relativeY = 0
     }
     
-    // Check if user returned to origin (cancel gesture)
-    private func checkForCancel() -> Bool {
-        guard currentDirection != nil,
-              isShowingPreview,
-              !isCancelling else {
-            return false
-        }
-        
-        // Distance from origin determines whether the user effectively "undoes" the swipe.
-        let distanceFromOrigin = sqrt(absoluteX * absoluteX + absoluteY * absoluteY)
-        
-        // If we're close to where we started, it's a cancel
-        if distanceFromOrigin <= cancelThreshold {
-            isCancelling = true
-            currentDirection = nil
-            isShowingPreview = false
-            
-            // Provide haptic feedback for cancel
-            HapticFeedback.shared.gestureCompleted()
-            
-            // Show cancel preview
-            onSwipeCancelled?()
-            
-            return true
-        }
-        
-        return false
-    }
-    
     // Handle when fingers lift from trackpad
     private func handleGestureEnd() {
-        // Do not execute action if we're in cancel state.
-        if isCancelling {
-            resetAll()
-            return
-        }
-        
         if let direction = currentDirection {
             // Gesture completed - execute the action
             HapticFeedback.shared.gestureCompleted()
@@ -265,7 +217,6 @@ final class GestureClassifier {
         relativeY = 0
         currentDirection = nil
         isShowingPreview = false
-        isCancelling = false
         lastDirectionChangeTime = 0
     }
     
@@ -281,4 +232,3 @@ final class GestureClassifier {
         }
     }
 }
-
