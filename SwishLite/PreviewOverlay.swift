@@ -21,6 +21,10 @@ final class PreviewOverlay {
     case maximize
     case minimize
     case cancel
+    case topLeft
+    case topRight
+    case bottomLeft
+    case bottomRight
   }
 
   private init() {}
@@ -41,6 +45,14 @@ final class PreviewOverlay {
       previewType = .maximize
     case .down:
       previewType = .minimize
+    case .upLeft:
+      previewType = .topLeft
+    case .upRight:
+      previewType = .topRight
+    case .downLeft:
+      previewType = .bottomLeft
+    case .downRight:
+      previewType = .bottomRight
     }
 
     // Create or update overlay
@@ -102,6 +114,34 @@ final class PreviewOverlay {
         width: 180,
         height: 40
       )
+    case .upLeft:
+      return CGRect(
+        x: vf.minX + padding,
+        y: vf.minY + (vf.height / 2) + padding * 0.5,
+        width: (vf.width / 2) - padding * 1.5,
+        height: (vf.height / 2) - padding * 1.5
+      )
+    case .upRight:
+      return CGRect(
+        x: vf.minX + (vf.width / 2) + padding * 0.5,
+        y: vf.minY + (vf.height / 2) + padding * 0.5,
+        width: (vf.width / 2) - padding * 1.5,
+        height: (vf.height / 2) - padding * 1.5
+      )
+    case .downLeft:
+      return CGRect(
+        x: vf.minX + padding,
+        y: vf.minY + padding,
+        width: (vf.width / 2) - padding * 1.5,
+        height: (vf.height / 2) - padding * 1.5
+      )
+    case .downRight:
+      return CGRect(
+        x: vf.minX + (vf.width / 2) + padding * 0.5,
+        y: vf.minY + padding,
+        width: (vf.width / 2) - padding * 1.5,
+        height: (vf.height / 2) - padding * 1.5
+      )
     }
   }
 
@@ -157,7 +197,7 @@ private class PreviewView: NSView {
     let strokeColor = baseColor.withAlphaComponent(strokeAlpha).cgColor
 
     switch previewType {
-    case .leftHalf, .rightHalf, .maximize:
+    case .leftHalf, .rightHalf, .maximize, .topLeft, .topRight, .bottomLeft, .bottomRight:
       // Draw blue semi-transparent overlay for window positioning
       context?.setFillColor(fillColor)
       context?.fill(bounds)

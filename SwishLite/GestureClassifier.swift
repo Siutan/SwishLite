@@ -12,6 +12,10 @@ enum SwipeDirection {
     case right
     case up
     case down
+    case upLeft
+    case upRight
+    case downLeft
+    case downRight
 }
 
 @MainActor
@@ -49,6 +53,7 @@ final class GestureClassifier {
     private var currentDirection: SwipeDirection?
     private var isShowingPreview = false
     private var lastDirectionChangeTime: TimeInterval = 0
+    private var didChangeDirection = false
     
     var onSwipeDetected: ((SwipeDirection) -> Void)? // Called when swipe is first detected
     var onSwipeCompleted: ((SwipeDirection) -> Void)? // Called when fingers lift (actual action)
@@ -111,6 +116,7 @@ final class GestureClassifier {
                         resetCenterPoint()
                         currentDirection = newDir
                         lastDirectionChangeTime = currentTime
+                        didChangeDirection = true
                         
                         // Provide haptic feedback for direction change
                         HapticFeedback.shared.swipeDetected()
@@ -134,6 +140,7 @@ final class GestureClassifier {
                 currentDirection = newDir
                 isShowingPreview = true
                 lastDirectionChangeTime = currentTime
+                didChangeDirection = false
                 
                 HapticFeedback.shared.swipeDetected()
                 onSwipeDetected?(newDir)
@@ -145,10 +152,16 @@ final class GestureClassifier {
     private func determineDirection() -> SwipeDirection? {
         let absX = abs(relativeX)
         let absY = abs(relativeY)
+        let absTotalX = abs(absoluteX)
+        let absTotalY = abs(absoluteY)
         
         // Require a minimum movement to reduce false positives from micro-jitter.
         if absX < detectionThreshold && absY < detectionThreshold {
             return nil
+        }
+        
+        if let quadrant = determineQuadrant(absX: absTotalX, absY: absTotalY) {
+            return quadrant
         }
         
         // Determine which direction is dominant
@@ -182,6 +195,10 @@ final class GestureClassifier {
         case .down: return 90
         case .left: return 180
         case .up: return 270
+        case .downRight: return 45
+        case .downLeft: return 135
+        case .upLeft: return 225
+        case .upRight: return 315
         }
     }
     
@@ -191,6 +208,31 @@ final class GestureClassifier {
         centerY = absoluteY
         relativeX = 0
         relativeY = 0
+    }
+
+    private func determineQuadrant(absX: CGFloat, absY: CGFloat) -> SwipeDirection? {
+        guard absX >= detectionThreshold, absY >= detectionThreshold else {
+            return nil
+        }
+
+        let ratio = absX / max(absY, 0.001)
+        let isDiagonalSwipe = ratio > 0.5 && ratio < 2.0
+
+        guard didChangeDirection || isDiagonalSwipe else {
+            return nil
+        }
+
+        if absoluteX < 0 && absoluteY < 0 {
+            return .upLeft
+        } else if absoluteX > 0 && absoluteY < 0 {
+            return .upRight
+        } else if absoluteX < 0 && absoluteY > 0 {
+            return .downLeft
+        } else if absoluteX > 0 && absoluteY > 0 {
+            return .downRight
+        }
+
+        return nil
     }
     
     // Handle when fingers lift from trackpad
@@ -218,6 +260,7 @@ final class GestureClassifier {
         currentDirection = nil
         isShowingPreview = false
         lastDirectionChangeTime = 0
+        didChangeDirection = false
     }
     
     // Called externally to reset (e.g., Escape key or Fn release)

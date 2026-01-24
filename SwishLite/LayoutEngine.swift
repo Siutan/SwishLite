@@ -52,6 +52,50 @@ final class LayoutEngine {
     return applyFrameWithAnchoring(targetRect, to: window, screen: screen, anchor: .center)
   }
 
+  func snapTopLeft(_ window: AXUIElement, screen: NSScreen) -> Bool {
+    let vf = screen.visibleFrame
+    let targetRect = CGRect(
+      x: vf.minX + edgePadding,
+      y: vf.minY + (vf.height / 2) + edgePadding * 0.5,
+      width: (vf.width / 2) - edgePadding * 1.5,
+      height: (vf.height / 2) - edgePadding * 1.5
+    )
+    return applyFrameWithAnchoring(targetRect, to: window, screen: screen, anchor: .left)
+  }
+
+  func snapTopRight(_ window: AXUIElement, screen: NSScreen) -> Bool {
+    let vf = screen.visibleFrame
+    let targetRect = CGRect(
+      x: vf.minX + (vf.width / 2) + edgePadding * 0.5,
+      y: vf.minY + (vf.height / 2) + edgePadding * 0.5,
+      width: (vf.width / 2) - edgePadding * 1.5,
+      height: (vf.height / 2) - edgePadding * 1.5
+    )
+    return applyFrameWithAnchoring(targetRect, to: window, screen: screen, anchor: .right)
+  }
+
+  func snapBottomLeft(_ window: AXUIElement, screen: NSScreen) -> Bool {
+    let vf = screen.visibleFrame
+    let targetRect = CGRect(
+      x: vf.minX + edgePadding,
+      y: vf.minY + edgePadding,
+      width: (vf.width / 2) - edgePadding * 1.5,
+      height: (vf.height / 2) - edgePadding * 1.5
+    )
+    return applyFrameWithAnchoring(targetRect, to: window, screen: screen, anchor: .left)
+  }
+
+  func snapBottomRight(_ window: AXUIElement, screen: NSScreen) -> Bool {
+    let vf = screen.visibleFrame
+    let targetRect = CGRect(
+      x: vf.minX + (vf.width / 2) + edgePadding * 0.5,
+      y: vf.minY + edgePadding,
+      width: (vf.width / 2) - edgePadding * 1.5,
+      height: (vf.height / 2) - edgePadding * 1.5
+    )
+    return applyFrameWithAnchoring(targetRect, to: window, screen: screen, anchor: .right)
+  }
+
   private enum AnchorPosition {
     case left
     case right

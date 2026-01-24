@@ -257,6 +257,26 @@ final class EventMonitor {
       }
     case .down:
       success = engine.minimize(window)
+    case .upLeft:
+      success = engine.snapTopLeft(window, screen: screen)
+      if success {
+        WindowPairManager.shared.unpair(window: window)
+      }
+    case .upRight:
+      success = engine.snapTopRight(window, screen: screen)
+      if success {
+        WindowPairManager.shared.unpair(window: window)
+      }
+    case .downLeft:
+      success = engine.snapBottomLeft(window, screen: screen)
+      if success {
+        WindowPairManager.shared.unpair(window: window)
+      }
+    case .downRight:
+      success = engine.snapBottomRight(window, screen: screen)
+      if success {
+        WindowPairManager.shared.unpair(window: window)
+      }
     }
 
     // Bring window to front if action was successful (except for minimize)
