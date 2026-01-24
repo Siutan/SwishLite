@@ -23,12 +23,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Poll until permission is granted; we avoid background gestures without trust
         // to prevent confusing no-op interactions.
         PermissionsManager.shared.startPolling { [weak self] (trusted: Bool) in
-          if trusted {
-            Task { @MainActor in
-              self?.startMonitoring()
-              self?.menuBarController.updateMenu()
-              NSLog("Accessibility permission granted, monitoring started")
-            }
+          guard trusted else { return }
+
+          // Avoid capturing `self` in a concurrently-executing context by
+          // capturing the specific references we need in local constants.
+          guard let strongSelf = self else { return }
+          let startMonitoring: @MainActor () -> Void = { [weak strongSelf] in
+            strongSelf?.startMonitoring()
+          }
+          let updateMenu: @MainActor () -> Void = { [weak strongSelf] in
+            strongSelf?.menuBarController.updateMenu()
+          }
+
+          Task { @MainActor in
+            startMonitoring()
+            updateMenu()
+            NSLog("Accessibility permission granted, monitoring started")
           }
         }
       } else {
